@@ -5,7 +5,9 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <pthread.h>
-#include "conn_actions.h"
+
+#include "conn_pool.h"
+#include "server.h"
 
 #define SERVER_PORT 6969
 
@@ -14,7 +16,8 @@ struct sockaddr_in *server_addr;
 
 void listen_loop() {
     while (1) {
-        const int client_fd = accept_connection(server_fd);
+        struct sockaddr_in *client_addr = NULL;
+        const int client_fd = accept_connection(server_fd, client_addr);
         if (client_fd < 0) {
             perror("client connection failed");
         }
@@ -25,25 +28,33 @@ void listen_loop() {
             perror("message receiving failed");
             continue;
         }
-
         printf("Message received: %s\n", msg->message);
 
-        if (send(client_fd, msg->message, msg->len, 0) == -1) {
-            perror("response sending failed");
+        if (strcmp(msg->message, "connect") == 0) {
+            add_to_pool(client_fd, client_addr);
         }
+
+        send_message(client_fd, msg->message, msg->len);
         free(msg);
     }
 }
 
 void *cli_thread() {
     while (1) {
-        char buffer[128] = {0};
-        scanf("%s", buffer);
-        if (strcmp(buffer, "stop") == 0) {
+        char cmd[128] = {0};
+        scanf("%s", cmd);
+        if (strcmp(cmd, "stop") == 0) {
+            printf("server shutting down\n");
             close(server_fd);
             if (server_addr != NULL)
                 free(server_addr);
             exit(0);
+        }
+        if (strcmp(cmd, "sal") == 0) {
+            char buffer[1024] = {0};
+            printf("Enter message: ");
+            scanf("%s\n", buffer);
+            send_to_all(buffer, strlen(buffer));
         }
     }
 }
@@ -55,12 +66,12 @@ int main(void) {
         perror("socket creation failed\n");
         return 1;
     }
-    printf("Socket created\n");
+    printf("Server started at port %i\n", SERVER_PORT);
 
-    server_addr = init_addr(server_fd);
+    server_addr = init_addr(SERVER_PORT);
 
     if (bind(server_fd, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0) {
-        perror("Bind debil field");
+        perror("Bind debil failed");
         close(server_fd);
         return 1;
     }

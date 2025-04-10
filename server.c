@@ -2,15 +2,16 @@
 // Created by poproshaikin on 10.4.25.
 //
 
-#include "conn_actions.h"
+#include "server.h"
+
 #include <arpa/inet.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-int accept_connection(const int server_fd) {
-    struct sockaddr_in client_addr;
-    socklen_t client_len = sizeof(client_addr);
+int accept_connection(const int server_fd, struct sockaddr_in *client_addr) {
+    socklen_t client_len = sizeof(struct sockaddr_in);
     return accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
 }
 
@@ -32,6 +33,14 @@ Message *receive_message(const int client_fd) {
     message->len = received;
     message->err = false;
     return message;
+}
+
+int send_message(const int client_fd, const char *message, const size_t len) {
+    if (send(client_fd, message, len, 0) == -1) {
+        perror("response sending failed");
+        return -1;
+    }
+    return 0;
 }
 
 struct sockaddr_in *init_addr(const int port) {
