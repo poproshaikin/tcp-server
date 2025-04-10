@@ -6,15 +6,15 @@
 #define CONN_POOL_H
 #include <netinet/in.h>
 
-typedef struct {
-    int id;
-    int fd;
-    struct sockaddr_in *address;
-} Client;
+struct Pool {
+    struct Client **collection;
+    int count;
+};
 
-void add_to_pool(int fd, struct sockaddr_in *address);
+int add_to_pool(struct Pool *pool, struct Client *client);
 
-void send_to_all(const char *message, const size_t len);
+int send_to_all(const struct Pool *pool, const char *message, const size_t len);
 
+void dispose_pool(struct Pool *pool);
 
 #endif //CONN_POOL_H

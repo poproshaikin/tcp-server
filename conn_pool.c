@@ -6,39 +6,38 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "server.h"
 
-static Client **collection = NULL;
-static int collection_size = 0;
-
-void add_to_pool(const int fd, struct sockaddr_in *address) {
-    Client *new_client = malloc(sizeof(Client));
-    if (!new_client) {
-        perror("Failed to allocate memory for new client");
-        return;
-    }
-
-    new_client->id = collection_size;
-    new_client->fd = fd;
-    new_client->address = address;
-
-    Client **temp = realloc(collection, (collection_size + 1) * sizeof(Client*));
+int add_to_pool(struct Pool *pool, struct Client *client) {
+    struct Client **temp = realloc(pool->collection, (pool->count + 1) * sizeof(struct Client*));
     if (!temp) {
         perror("Failed to resize client collection");
-        free(new_client);
-        return;
+        free(client);
+        return -2;
     }
-    collection = temp;
+    pool->collection = temp;
 
-    collection[collection_size] = new_client;
-    collection_size++;
+    pool->collection[pool->count] = client;
+    pool->count++;
+    return 0;
 }
 
-void send_to_all(const char *message, const size_t len) {
-    for (int i = 0; i < collection_size; i++) {
-        const Client *client = collection[i];
-        send_message(client->fd, message, len);
+// Sends a message to all clients in the pool
+// Returns 0 for success
+int send_to_all(const struct Pool *pool, const char *message, const size_t len) {
+    for (int i = 0; i < pool->count; i++) {
+        const struct Client *client = pool->collection[i];
+        if (send_message(client->fd, message, len) != 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+void dispose_pool(struct Pool *pool) {
+    for (int i = 0; i < pool->count; i++) {
+        free(pool->collection[i]->address);
+        free(pool->collection[i]);
     }
 }
