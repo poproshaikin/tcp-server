@@ -8,6 +8,7 @@
 
 #include "conn_pool.h"
 #include "server.h"
+#include "utils.h"
 
 #define SERVER_PORT 6969
 
@@ -21,7 +22,9 @@ void listen_loop() {
         if (client_fd < 0) {
             perror("client connection failed");
         }
-        printf("Connection accepted: %i\n", client_fd);
+
+        const char *client_ip = get_ip(client_fd);
+        printf("Connection accepted: %s\n", client_ip);
 
         Message *msg = receive_message(client_fd);
         if (msg->err) {
@@ -34,7 +37,6 @@ void listen_loop() {
             add_to_pool(client_fd, client_addr);
         }
 
-        send_message(client_fd, msg->message, msg->len);
         free(msg);
     }
 }
