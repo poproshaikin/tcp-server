@@ -14,7 +14,8 @@
 #include <netinet/in.h>
 
 static void *listener(void *server_p);
-static void *message_observer(void *args_p);
+static void *listen_client(void *args_p);
+static pthread_t create_listening_thread(struct Server *server, struct Client *client);
 
 typedef struct {
     struct Server *server;
@@ -23,12 +24,12 @@ typedef struct {
 
 int create_server(struct Server *server, const int port, const int max_connections) {
     const int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_fd < 0) {
+    if (socket_fd == -1) {
         return -1;
     }
 
     // ReSharper disable once CppDFAMemoryLeak
-    struct sockaddr_in *socket_addr = init_addr(port);
+    struct sockaddr_in *socket_addr = init_server_addr(port);
 
     if (bind(socket_fd, (struct sockaddr *) socket_addr, sizeof(struct sockaddr_in)) < 0) {
         close(socket_fd);
@@ -42,22 +43,22 @@ int create_server(struct Server *server, const int port, const int max_connectio
         return -3;
     }
 
+    server->socket_fd = socket_fd;
+    printf("server socket fd: %i\n", socket_fd);
+    server->socket_addr = socket_addr;
+    server->connections_pool = create_pool();
+    server->callback_list = malloc(sizeof(CallbackList));
+    server->callback_list->collection = NULL;
+    server->callback_list->count = 0;
+
     pthread_t new_clients_thread;
     if (pthread_create(&new_clients_thread, NULL, listener, NULL) != 0) {
-        return -1;
+        return -4;
     }
 
-    pthread_t message_observer_thread;
-    if (pthread_create(&message_observer_thread, NULL, message_observer, NULL) != 0) {
-        return -1;
-    }
-
-    // ReSharper disable once CppDFAMemoryLeak
-    server = malloc(sizeof(struct Server));
-    server->socket_fd;
-    server->socket_addr = socket_addr;
-    server->connections_pool = malloc(sizeof(struct Pool));
     server->listening_thread = new_clients_thread;
+
+    server->mutex = malloc(sizeof(pthread_mutex_t));
     pthread_mutex_init(server->mutex, NULL);
 
     return 0;
@@ -86,17 +87,17 @@ int on_message(const struct Server *server, const Callback callback) {
     return 0;
 }
 
-// Accepts a socket by a listener SERVER_FD
-struct Client *accept_client(struct Server *server) {
+struct Client *accept_client(const struct Server *server) {
+    struct sockaddr_in *client_addr = malloc(sizeof(struct sockaddr_in));
     socklen_t len = sizeof(struct sockaddr_in);
-    const int client_fd = accept(server->socket_fd , (struct sockaddr*)&server->socket_addr, &len);
+    const int client_fd = accept(server->socket_fd , (struct sockaddr*)client_addr, &len);
 
     static int id = 0;
 
     struct Client *client = malloc(sizeof(struct Client));
-    client->id = id;
+    client->id = id++;
     client->fd = client_fd;
-    client->address = server->socket_addr;
+    client->address = client_addr;
     return client;
 }
 
@@ -115,7 +116,7 @@ struct Message *receive_message(const int client_fd) {
     buffer[received] = '\0';
 
     struct Message *message = malloc(sizeof(struct Message));
-    message->message = buffer;
+    message->message = strdup(buffer);
     message->len = received;
     message->err = false;
     return message;
@@ -130,7 +131,7 @@ int send_message(const int client_fd, const char *message, const size_t len) {
     return 0;
 }
 
-struct sockaddr_in *init_addr(const int port) {
+struct sockaddr_in *init_server_addr(const int port) {
     // ReSharper disable once CppDFAMemoryLeak
     struct sockaddr_in *addr = malloc(sizeof(struct sockaddr_in));
     addr->sin_family = AF_INET;
@@ -139,10 +140,22 @@ struct sockaddr_in *init_addr(const int port) {
     return addr;
 }
 
+struct sockaddr_in *init_client_addr(const int client_fd) {
+    struct sockaddr_in *addr = malloc(sizeof(struct sockaddr_in));
+    socklen_t len = sizeof(struct sockaddr_in);
+    if (getsockname(client_fd, (struct sockaddr *) addr, &len) == -1) {
+        free(addr);
+        return NULL;
+    }
+    return addr;
+}
+
 void dispose_server(struct Server *server) {
     close(server->socket_fd);
     free(server->socket_addr);
     dispose_pool(server->connections_pool);
+    pthread_mutex_destroy(server->mutex);
+    free(server->mutex);
     free(server);
 }
 
@@ -152,12 +165,59 @@ static void *listener(void *server_p) {
     // ReSharper disable once CppDFAEndlessLoop
     while (1) {
         struct Client *client = accept_client(server);
-        struct Message *message = receive_message(client->fd);
 
+        if (client == NULL) continue;
+        if (client->fd == -1) {
+            free(client);
+            continue;
+        }
+
+        struct Message *message = receive_message(client->fd);
+        if (message == NULL || message->err || message->message == NULL) {
+            free(message);
+            continue;
+        }
+
+        if (strcmp(message->message, "connect") == 0) {
+            create_listening_thread(server, client);
+        }
 
         free(message->message);
         free(message);
     }
 }
 
-// сделать функцию которая будет запускаться после приема нового клиента и будет слушать его сокет на наличие соединений, после вызовет callback
+static pthread_t create_listening_thread(struct Server *server, struct Client *client) {
+    MessageListenerThreadArgs *args = malloc(sizeof(MessageListenerThreadArgs));
+    args->server = server;
+    args->client = client;
+
+    pthread_t thread;
+    if (pthread_create(&thread, NULL, listen_client, args) != 0) {
+        return -1;
+    }
+    return thread;
+}
+
+static void *listen_client(void *args_p) {
+    const MessageListenerThreadArgs *args = args_p;
+    struct Server *server = args->server;
+    struct Client *client = args->client;
+
+    // ReSharper disable once CppDFAEndlessLoop
+    while (1) {
+        struct Message *message = receive_message(client->fd);
+        if (message->err) {
+            perror("message receiving failed");
+            continue;
+        }
+
+        for (int i = 0; i < server->callback_list->count; i++) {
+            CallbackOptions *callback_options = server->callback_list->collection[i];
+            callback_options->callback(message, client);
+        }
+
+        free(message->message);
+        free(message);
+    }
+}

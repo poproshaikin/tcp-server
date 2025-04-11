@@ -47,7 +47,7 @@ int create_server(struct Server *server, int port, int max_connections);
 
 int on_message(const struct Server *server, const Callback callback);
 
-struct Client *accept_client(struct Server *server);
+struct Client *accept_client(const struct Server *server);
 
 // Accepts message from socket CLIENT_FD
 // Returns struct with null-terminated string and length or error
@@ -55,7 +55,7 @@ struct Message *receive_message(int client_fd);
 
 int send_message(int client_fd, const char *message, size_t len);
 
-struct sockaddr_in *init_addr(int port);
+struct sockaddr_in *init_server_addr(int port);
 
 void dispose_server(struct Server *server);
 

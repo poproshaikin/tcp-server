@@ -11,6 +11,8 @@ struct Pool {
     int count;
 };
 
+struct Pool *create_pool();
+
 int add_to_pool(struct Pool *pool, struct Client *client);
 
 int send_to_all(const struct Pool *pool, const char *message, const size_t len);

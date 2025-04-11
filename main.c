@@ -13,7 +13,7 @@
 
 void listen_loop(struct Server *server) {
     while (1) {
-        const struct Client *client = accept_client(server);
+        struct Client *client = accept_client(server);
         if (client->fd < 0) {
             perror("client connection failed");
         }
@@ -29,7 +29,7 @@ void listen_loop(struct Server *server) {
         printf("Message received: %s\n", msg->message);
 
         if (strcmp(msg->message, "connect") == 0) {
-            if (add_to_pool(server->connections_pool, client->fd, client->address) != 0) {
+            if (add_to_pool(server->connections_pool, client) != 0) {
                 perror("Failed to add client to the pool");
                 continue;
             }
@@ -60,10 +60,11 @@ void *cli_thread(void *server_p) {
 
 int main(void) {
     struct Server server;
-    if (create_server(&server, SERVER_PORT, 10) != 0) {
+    if (create_server(&server, SERVER_PORT, 10) < 0) {
         perror("Failed to start server");
         return 1;
     }
+    printf("fd: %i\n", server.socket_fd);
     printf("Server started at address %s:%i", get_ip(server.socket_fd), SERVER_PORT);
 
     pthread_t pid;

@@ -9,11 +9,19 @@
 
 #include "server.h"
 
+struct Pool *create_pool() {
+    struct Pool *pool = malloc(sizeof(struct Pool));
+    if (!pool) {
+        return NULL;
+    }
+    pool->collection = NULL;
+    pool->count = 0;
+    return pool;
+}
+
 int add_to_pool(struct Pool *pool, struct Client *client) {
     struct Client **temp = realloc(pool->collection, (pool->count + 1) * sizeof(struct Client*));
     if (!temp) {
-        perror("Failed to resize client collection");
-        free(client);
         return -2;
     }
     pool->collection = temp;
@@ -40,4 +48,5 @@ void dispose_pool(struct Pool *pool) {
         free(pool->collection[i]->address);
         free(pool->collection[i]);
     }
+    free(pool);
 }
