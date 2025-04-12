@@ -7,6 +7,6 @@
 
 #include <netinet/in.h>
 
-const char *get_ip(const int client_fd);
+char *get_server_ip(const int server_fd, const struct sockaddr_in *server_addr);
 
 #endif //UTILS_H

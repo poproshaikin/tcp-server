@@ -13,9 +13,9 @@
 #include <unistd.h>
 #include <netinet/in.h>
 
-static void *listener(void *server_p);
+static void *new_clients_listener(void *server_p);
 static void *listen_client(void *args_p);
-static pthread_t create_listening_thread(struct Server *server, struct Client *client);
+static pthread_t create_client_listening_thread(struct Server *server, struct Client *client);
 
 typedef struct {
     struct Server *server;
@@ -28,7 +28,6 @@ int create_server(struct Server *server, const int port, const int max_connectio
         return -1;
     }
 
-    // ReSharper disable once CppDFAMemoryLeak
     struct sockaddr_in *socket_addr = init_server_addr(port);
 
     if (bind(socket_fd, (struct sockaddr *) socket_addr, sizeof(struct sockaddr_in)) < 0) {
@@ -44,7 +43,6 @@ int create_server(struct Server *server, const int port, const int max_connectio
     }
 
     server->socket_fd = socket_fd;
-    printf("server socket fd: %i\n", socket_fd);
     server->socket_addr = socket_addr;
     server->connections_pool = create_pool();
     server->callback_list = malloc(sizeof(CallbackList));
@@ -52,7 +50,7 @@ int create_server(struct Server *server, const int port, const int max_connectio
     server->callback_list->count = 0;
 
     pthread_t new_clients_thread;
-    if (pthread_create(&new_clients_thread, NULL, listener, NULL) != 0) {
+    if (pthread_create(&new_clients_thread, NULL, new_clients_listener, server) != 0) {
         return -4;
     }
 
@@ -93,11 +91,12 @@ struct Client *accept_client(const struct Server *server) {
     const int client_fd = accept(server->socket_fd , (struct sockaddr*)client_addr, &len);
 
     static int id = 0;
-
     struct Client *client = malloc(sizeof(struct Client));
+
     client->id = id++;
     client->fd = client_fd;
     client->address = client_addr;
+
     return client;
 }
 
@@ -132,7 +131,6 @@ int send_message(const int client_fd, const char *message, const size_t len) {
 }
 
 struct sockaddr_in *init_server_addr(const int port) {
-    // ReSharper disable once CppDFAMemoryLeak
     struct sockaddr_in *addr = malloc(sizeof(struct sockaddr_in));
     addr->sin_family = AF_INET;
     addr->sin_addr.s_addr = INADDR_ANY;
@@ -150,16 +148,8 @@ struct sockaddr_in *init_client_addr(const int client_fd) {
     return addr;
 }
 
-void dispose_server(struct Server *server) {
-    close(server->socket_fd);
-    free(server->socket_addr);
-    dispose_pool(server->connections_pool);
-    pthread_mutex_destroy(server->mutex);
-    free(server->mutex);
-    free(server);
-}
 
-static void *listener(void *server_p) {
+static void *new_clients_listener(void *server_p) {
     struct Server *server = server_p;
 
     // ReSharper disable once CppDFAEndlessLoop
@@ -179,7 +169,7 @@ static void *listener(void *server_p) {
         }
 
         if (strcmp(message->message, "connect") == 0) {
-            create_listening_thread(server, client);
+            create_client_listening_thread(server, client);
         }
 
         free(message->message);
@@ -187,7 +177,7 @@ static void *listener(void *server_p) {
     }
 }
 
-static pthread_t create_listening_thread(struct Server *server, struct Client *client) {
+static pthread_t create_client_listening_thread(struct Server *server, struct Client *client) {
     MessageListenerThreadArgs *args = malloc(sizeof(MessageListenerThreadArgs));
     args->server = server;
     args->client = client;
@@ -220,4 +210,13 @@ static void *listen_client(void *args_p) {
         free(message->message);
         free(message);
     }
+}
+
+void dispose_server(struct Server *server) {
+    close(server->socket_fd);
+    free(server->socket_addr);
+    dispose_pool(server->connections_pool);
+    pthread_mutex_destroy(server->mutex);
+    free(server->mutex);
+    free(server);
 }
