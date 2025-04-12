@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.30)
-project(tcp-server)
+project(server)
 
 set(CMAKE_C_STANDARD 17)
 
-add_executable(tcp-server main.c server.c
+add_executable(server main.c server.c
         conn_pool.h
         conn_pool.c
         utils.c

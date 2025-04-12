@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <unistd.h>
 #include <pthread.h>
 
 #include "conn_pool.h"
@@ -12,6 +11,7 @@
 #define SERVER_PORT 6969
 
 void listen_loop(struct Server *server) {
+    // ReSharper disable once CppDFAEndlessLoop
     while (1) {
         struct Client *client = accept_client(server);
         if (client->fd < 0) {
@@ -41,15 +41,17 @@ void listen_loop(struct Server *server) {
 
 void *cli_thread(void *server_p) {
     struct Server *server = server_p;
+    printf("Server CLI started\n");
+    printf("Enter commands to the console to control the server\n");
     while (1) {
         char cmd[128] = {0};
         scanf("%s", cmd);
         if (strcmp(cmd, "stop") == 0) {
-            printf("server shutting down\n");
+            printf("Server shutting down\n");
             dispose_server(server);
             exit(0);
         }
-        if (strcmp(cmd, "sal") == 0) {
+        else if (strcmp(cmd, "sal") == 0) {
             char buffer[1024] = {0};
             printf("Enter message: ");
             scanf("%s\n", buffer);
@@ -65,7 +67,7 @@ int main(void) {
         return 1;
     }
     char *address = get_server_ip(server.socket_fd, server.socket_addr);
-    printf("Server started at address %s:%i", address, SERVER_PORT);
+    printf("Server started at address %s:%i\n", address, SERVER_PORT);
 
     pthread_t pid;
     if (pthread_create(&pid, NULL, cli_thread, &server) != 0) {
