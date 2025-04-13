@@ -8,3 +8,5 @@ add_executable(server main.c server.c
         conn_pool.c
         utils.c
         utils.h)
+
+target_include_directories(server PRIVATE include)
