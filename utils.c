@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 
-char *get_server_ip(const int server_fd, const struct sockaddr_in *server_addr) {
+char *get_ip(const int server_fd, const struct sockaddr_in *server_addr) {
     socklen_t addr_len = sizeof(*server_addr);
 
     // Get the peer address

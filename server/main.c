@@ -6,7 +6,7 @@
 
 #include "conn_pool.h"
 #include "server.h"
-#include "utils.h"
+#include "../utils.h"
 
 #define SERVER_PORT 6969
 
@@ -66,7 +66,7 @@ int main(void) {
         perror("Failed to start server");
         return 1;
     }
-    char *address = get_server_ip(server.socket_fd, server.socket_addr);
+    char *address = get_ip(server.socket_fd, server.socket_addr);
     printf("Server started at address %s:%i\n", address, SERVER_PORT);
 
     pthread_t pid;

@@ -9,12 +9,7 @@
 #include <stdbool.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-
-struct Message {
-    char *message;
-    ssize_t len;
-    bool err;
-};
+#include "../message.h"
 
 struct Client {
     int id;

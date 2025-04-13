@@ -138,7 +138,7 @@ struct sockaddr_in *init_server_addr(const int port) {
     return addr;
 }
 
-struct sockaddr_in *init_client_addr(const int client_fd) {
+static struct sockaddr_in *init_client_addr(const int client_fd) {
     struct sockaddr_in *addr = malloc(sizeof(struct sockaddr_in));
     socklen_t len = sizeof(struct sockaddr_in);
     if (getsockname(client_fd, (struct sockaddr *) addr, &len) == -1) {
@@ -147,7 +147,6 @@ struct sockaddr_in *init_client_addr(const int client_fd) {
     }
     return addr;
 }
-
 
 static void *new_clients_listener(void *server_p) {
     struct Server *server = server_p;

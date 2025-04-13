@@ -6,7 +6,8 @@ set(CMAKE_C_STANDARD 17)
 add_executable(server main.c server.c
         conn_pool.h
         conn_pool.c
-        utils.c
-        utils.h)
+        ../utils.c
+        ../message.h
+)
 
 target_include_directories(server PRIVATE include)
