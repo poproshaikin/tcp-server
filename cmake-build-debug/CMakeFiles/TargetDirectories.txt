@@ -1,8 +1,0 @@
-/home/poproshaikin/Projects/C C++/tcp-server/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/poproshaikin/Projects/C C++/tcp-server/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/poproshaikin/Projects/C C++/tcp-server/cmake-build-debug/client/CMakeFiles/client.dir
-/home/poproshaikin/Projects/C C++/tcp-server/cmake-build-debug/client/CMakeFiles/edit_cache.dir
-/home/poproshaikin/Projects/C C++/tcp-server/cmake-build-debug/client/CMakeFiles/rebuild_cache.dir
-/home/poproshaikin/Projects/C C++/tcp-server/cmake-build-debug/server/CMakeFiles/server.dir
-/home/poproshaikin/Projects/C C++/tcp-server/cmake-build-debug/server/CMakeFiles/edit_cache.dir
-/home/poproshaikin/Projects/C C++/tcp-server/cmake-build-debug/server/CMakeFiles/rebuild_cache.dir

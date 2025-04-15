@@ -1,8 +1,0 @@
-# ninja log v6
-1	19	1744570420605918043	client/CMakeFiles/client.dir/main.c.o	b4a8fe5a9878b90b
-1	34	1744570388442425361	server/CMakeFiles/server.dir/main.c.o	447bd34743c0c77c
-1	27	1744570388442425361	server/CMakeFiles/server.dir/utils.c.o	ae54936e1594636c
-43	58	1744570388482425559	server/server	6620e7c756a05e4c
-1	30	1744570388442425361	server/CMakeFiles/server.dir/conn_pool.c.o	8f71023093128c2a
-20	36	1744570420622584792	client/client	51b73f00598e0e4b
-1	42	1744570388442425361	server/CMakeFiles/server.dir/server.c.o	7975249a738e33ba
