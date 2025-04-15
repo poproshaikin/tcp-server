@@ -19,24 +19,34 @@ void listen_loop(struct Server *server) {
             free(client);
             continue;
         }
-
         printf("Connection accepted: %s\n", get_ip(client->fd, client->address));
-
+       
         struct Message *msg = receive_message(client->fd);
         if (msg->err) {
             perror("message receiving failed");
             continue;
         }
-        printf("Message received: %s\n", msg->message);
 
         if (strcmp(msg->message, "connect") == 0) {
             if (add_to_pool(server->connections_pool, client) != 0) {
-                perror("Failed to add client to the pool");
+                perror("failed to add client to pool");
+                free(client);
+                free(msg);
                 continue;
             }
         }
 
-        free(msg);
+        /*struct Message *msg = receive_message(client->fd);*/
+        /*printf("Message received: %s\n", msg->message);*/
+        /**/
+        /*if (strcmp(msg->message, "connect") == 0) {*/
+        /*    if (add_to_pool(server->connections_pool, client) != 0) {*/
+        /*        perror("Failed to add client to the pool");*/
+        /*        continue;*/
+        /*    }*/
+        /*}*/
+        /**/
+        /*free(msg);*/
     }
 }
 
@@ -62,6 +72,10 @@ void *cli_thread(void *server_p) {
     }
 }
 
+void callback(struct Message *message, struct Client *client) {
+    printf("Message received from %s:%i: %s\n", get_ip(client->fd, client->address), client->address->sin_port, message->message); 
+}
+
 int main(int argc, char **argv) {
     int finalPort = SERVER_PORT;
     if (argc == 0 && argv == NULL) {
@@ -80,6 +94,8 @@ int main(int argc, char **argv) {
         perror("Failed to create cli thread");
         return 1;
     }
+
+    
 
     listen_loop(&server);
     dispose_server(&server);

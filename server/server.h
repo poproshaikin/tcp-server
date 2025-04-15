@@ -20,11 +20,7 @@ struct Client {
 typedef void(*Callback)(struct Message *, struct Client *);
 
 typedef struct {
-    Callback callback;
-} CallbackOptions;
-
-typedef struct {
-    CallbackOptions **collection;
+    Callback *collection;
     int count;
 } CallbackList;
 
@@ -40,17 +36,16 @@ struct Server {
 
 int create_server(struct Server *server, int port, int max_connections);
 
-int on_message(const struct Server *server, const Callback callback);
-
 struct Client *accept_client(const struct Server *server);
+void start_listening_client(struct Client *client);
+
+int on_message(const struct Server *server, Callback callback);
+
 
 // Accepts message from socket CLIENT_FD
 // Returns struct with null-terminated string and length or error
 struct Message *receive_message(int client_fd);
-
 int send_message(int client_fd, const char *message, size_t len);
-
-struct sockaddr_in *init_server_addr(int port);
 
 void dispose_server(struct Server *server);
 

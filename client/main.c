@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
         finalPort = port;
     } else {
         finalIp = argv[1];
+        printf("%s", finalIp);
         finalPort = atoi(argv[2]);
     }
 

@@ -16,6 +16,7 @@
 static void *new_clients_listener(void *server_p);
 static void *listen_client(void *args_p);
 static pthread_t create_client_listening_thread(struct Server *server, struct Client *client);
+static struct sockaddr_in *init_server_addr(const int port);
 
 typedef struct {
     struct Server *server;
@@ -62,23 +63,16 @@ int create_server(struct Server *server, const int port, const int max_connectio
     return 0;
 }
 
-int on_message(const struct Server *server, const Callback callback) {
+int on_message(const struct Server *server, Callback callback) {
     pthread_mutex_lock(server->mutex);
 
-    CallbackOptions **temp = realloc(server->callback_list->collection, (server->callback_list->count + 1) * sizeof(CallbackOptions*));
+    Callback *temp = realloc(server->callback_list->collection, (server->callback_list->count + 1) * sizeof(Callback));
     if (temp == NULL) {
         return -2;
     }
 
-    CallbackOptions *callback_options = malloc(sizeof(CallbackOptions));
-    if (callback_options == NULL) {
-        free(temp);
-        return -3;
-    }
-    callback_options->callback = callback;
-
     server->callback_list->collection = temp;
-    server->callback_list->collection[server->callback_list->count + 1] = callback_options;
+    server->callback_list->collection[server->callback_list->count] = callback;
     server->callback_list->count++;
     pthread_mutex_unlock(server->mutex);
 
@@ -89,6 +83,10 @@ struct Client *accept_client(const struct Server *server) {
     struct sockaddr_in *client_addr = malloc(sizeof(struct sockaddr_in));
     socklen_t len = sizeof(struct sockaddr_in);
     const int client_fd = accept(server->socket_fd , (struct sockaddr*)client_addr, &len);
+    if (client_fd == -1) {
+        free(client_addr);
+        return NULL;
+    }
 
     static int id = 0;
     struct Client *client = malloc(sizeof(struct Client));
@@ -130,7 +128,7 @@ int send_message(const int client_fd, const char *message, const size_t len) {
     return 0;
 }
 
-struct sockaddr_in *init_server_addr(const int port) {
+static struct sockaddr_in *init_server_addr(const int port) {
     struct sockaddr_in *addr = malloc(sizeof(struct sockaddr_in));
     addr->sin_family = AF_INET;
     addr->sin_addr.s_addr = INADDR_ANY;
@@ -201,8 +199,7 @@ static void *listen_client(void *args_p) {
         }
 
         for (int i = 0; i < server->callback_list->count; i++) {
-            CallbackOptions *callback_options = server->callback_list->collection[i];
-            callback_options->callback(message, client);
+            server->callback_list->collection[i](message, client);
         }
 
         free(message->message);
