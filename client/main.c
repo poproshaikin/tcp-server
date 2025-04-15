@@ -74,21 +74,14 @@ pthread_t create_sending_thread(Client *client) {
 }
 
 int main(int argc, char **argv) {
-    /*printf("Enter message: ");*/
-    /*char *str = read_str();*/
-    /*printf("\n");*/
-    /*printf("%s", str);*/
-    /*printf("len: %lu", strlen(str));*/
-
     char *finalIp;
     int finalPort;
 
-    if (argc == 0 && argv == NULL) {
+    if (argc == 1) {
         finalIp = ip;
         finalPort = port;
     } else {
         finalIp = argv[1];
-        printf("%s", finalIp);
         finalPort = atoi(argv[2]);
     }
 

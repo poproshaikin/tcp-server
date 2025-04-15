@@ -63,6 +63,7 @@ int create_server(struct Server *server, const int port, const int max_connectio
     return 0;
 }
 
+// Adds a callback that will be called when new message received
 int on_message(const struct Server *server, Callback callback) {
     pthread_mutex_lock(server->mutex);
 
@@ -79,6 +80,7 @@ int on_message(const struct Server *server, Callback callback) {
     return 0;
 }
 
+// Awaits new client connecting to SERVER and returns CLIENT with metadata about connection
 struct Client *accept_client(const struct Server *server) {
     struct sockaddr_in *client_addr = malloc(sizeof(struct sockaddr_in));
     socklen_t len = sizeof(struct sockaddr_in);
@@ -119,7 +121,7 @@ struct Message *receive_message(const int client_fd) {
     return message;
 }
 
-// Sends a MESSAGE with length LEN to the socket CLIENT_FD
+// Sends a MESSAGE with length LEN to the socket CLIENT_FD  
 // Returns 0 for success
 int send_message(const int client_fd, const char *message, const size_t len) {
     if (send(client_fd, message, len, 0) == -1) {

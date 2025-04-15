@@ -10,6 +10,10 @@
 
 #define SERVER_PORT 26263
 
+void print_msg(struct Message *message, struct Client *client) {
+    printf("Message received from %s:%i: %s\n", get_ip(client->fd, client->address), client->address->sin_port, message->message); 
+}
+
 void listen_loop(struct Server *server) {
     // ReSharper disable once CppDFAEndlessLoop
     while (1) {
@@ -26,6 +30,8 @@ void listen_loop(struct Server *server) {
             perror("message receiving failed");
             continue;
         }
+
+        print_msg(msg, client);
 
         if (strcmp(msg->message, "connect") == 0) {
             if (add_to_pool(server->connections_pool, client) != 0) {
@@ -72,9 +78,6 @@ void *cli_thread(void *server_p) {
     }
 }
 
-void callback(struct Message *message, struct Client *client) {
-    printf("Message received from %s:%i: %s\n", get_ip(client->fd, client->address), client->address->sin_port, message->message); 
-}
 
 int main(int argc, char **argv) {
     int finalPort = SERVER_PORT;
@@ -95,7 +98,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    
+    on_message(&server, &print_msg);
 
     listen_loop(&server);
     dispose_server(&server);
