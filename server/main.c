@@ -20,8 +20,7 @@ void listen_loop(struct Server *server) {
             continue;
         }
 
-        // const char *client_ip = get_server_ip(client->fd, server->socket_addr);
-        // printf("Connection accepted: %s\n", client_ip);
+        printf("Connection accepted: %s\n", get_ip(client->fd, client->address));
 
         struct Message *msg = receive_message(client->fd);
         if (msg->err) {
@@ -63,7 +62,12 @@ void *cli_thread(void *server_p) {
     }
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+    int finalPort = SERVER_PORT;
+    if (argc == 0 && argv == NULL) {
+        finalPort = atoi(argv[1]);
+    }
+
     struct Server server;
     if (create_server(&server, SERVER_PORT, 10) != 0) {
         perror("Failed to start server");

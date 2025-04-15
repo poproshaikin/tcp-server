@@ -133,7 +133,7 @@ int send_message(const int client_fd, const char *message, const size_t len) {
 struct sockaddr_in *init_server_addr(const int port) {
     struct sockaddr_in *addr = malloc(sizeof(struct sockaddr_in));
     addr->sin_family = AF_INET;
-    addr->sin_addr.s_addr = INADDR_ANY;
+    addr->sin_addr.s_addr = INADDR_LOOPBACK;
     addr->sin_port = htons(port);
     return addr;
 }
