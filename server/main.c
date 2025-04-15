@@ -8,7 +8,7 @@
 #include "server.h"
 #include "../utils.h"
 
-#define SERVER_PORT 6969
+#define SERVER_PORT 26263
 
 void listen_loop(struct Server *server) {
     // ReSharper disable once CppDFAEndlessLoop
@@ -16,6 +16,8 @@ void listen_loop(struct Server *server) {
         struct Client *client = accept_client(server);
         if (client->fd < 0) {
             perror("client connection failed");
+            free(client);
+            continue;
         }
 
         // const char *client_ip = get_server_ip(client->fd, server->socket_addr);
@@ -44,18 +46,19 @@ void *cli_thread(void *server_p) {
     printf("Server CLI started\n");
     printf("Enter commands to the console to control the server\n");
     while (1) {
-        char cmd[128] = {0};
-        scanf("%s", cmd);
+        char *cmd = read_str();
         if (strcmp(cmd, "stop") == 0) {
             printf("Server shutting down\n");
             dispose_server(server);
             exit(0);
         }
         else if (strcmp(cmd, "sal") == 0) {
-            char buffer[1024] = {0};
             printf("Enter message: ");
-            scanf("%s\n", buffer);
-            send_to_all(server->connections_pool, buffer, strlen(buffer));
+            char *msg = read_str();
+            send_to_all(server->connections_pool, msg, strlen(msg));
+        }
+        else {
+
         }
     }
 }

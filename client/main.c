@@ -5,19 +5,21 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "client.h"
 #include "../message.h"
+#include "../utils.h"
 
 #define MSG_BUFFER_LEN 2048
 
 typedef struct Client Client;
 typedef struct Message Message;
 
-const char ip[] = "77.236.222.115";
-const int port = 6969;
+const char ip[] = "0.0.0.0";
+const int port = 26263;
 
-void receiving_thread(void *client_p) {
+void *receiving_thread(void *client_p) {
     Client *client = client_p;
 
     // ReSharper disable once CppDFAEndlessLoop
@@ -35,22 +37,23 @@ void receiving_thread(void *client_p) {
 pthread_t create_receiving_thread(Client *client) {
     pthread_t thread;
     if (pthread_create(&thread, NULL, receiving_thread, client) != 0) {
-        perror('failed to create receiving thread');
+        perror("failed to create receiving thread");
         exit(1);
     }
     return thread;
 }
 
-void sending_thread(void *client_p) {
+void *sending_thread(void *client_p) {
     Client *client = client_p;
-    char buffer[MSG_BUFFER_LEN] = {0};
 
     while (1) {
         printf("Enter message: ");
-        int len = scanf("%s\n", buffer);
-        Message message {
-            .message = buffer,
-            .len = len,
+        
+        char *str = read_str();
+
+        Message message = {
+            .message = str,
+            .len = strlen(str),
             .err = false
         };
         if (send_message(client, &message) == -1) {
@@ -64,13 +67,19 @@ void sending_thread(void *client_p) {
 pthread_t create_sending_thread(Client *client) {
     pthread_t thread;
     if (pthread_create(&thread, NULL, sending_thread, client) != 0) {
-        perror('failed to create listening thread');
+        perror("failed to create listening thread");
         exit(1);
     }
     return thread;
 }
 
 int main() {
+    /*printf("Enter message: ");*/
+    /*char *str = read_str();*/
+    /*printf("\n");*/
+    /*printf("%s", str);*/
+    /*printf("len: %lu", strlen(str));*/
+
     Client *client = create_client(ip, port);
     if (client == NULL) {
         perror("client creation failed");
@@ -79,4 +88,8 @@ int main() {
 
     create_receiving_thread(client);
     create_sending_thread(client);
+
+    while (1) {
+
+    }
 }

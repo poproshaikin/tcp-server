@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <netinet/in.h>
+#include "../message.h"
 
 struct Client {
     int server_fd;

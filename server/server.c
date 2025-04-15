@@ -151,7 +151,6 @@ static struct sockaddr_in *init_client_addr(const int client_fd) {
 static void *new_clients_listener(void *server_p) {
     struct Server *server = server_p;
 
-    // ReSharper disable once CppDFAEndlessLoop
     while (1) {
         struct Client *client = accept_client(server);
 
@@ -219,3 +218,4 @@ void dispose_server(struct Server *server) {
     free(server->mutex);
     free(server);
 }
+
