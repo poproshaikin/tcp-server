@@ -63,7 +63,7 @@ struct Message *receive_message(const struct Client *client) {
     message->message = buffer;
     message->len = received;
     message->err = false;
-
+    return message;
 }
 
 static struct sockaddr_in init_server_addr(const char *ip, const int port) {

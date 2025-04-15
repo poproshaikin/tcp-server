@@ -17,4 +17,6 @@ struct Client *create_client(const char *ip, const int port);
 
 int send_message(const struct Client *client, const struct Message *message);
 
+struct Message *receive_message(const struct Client *client);
+
 #endif //CLIENT_H
