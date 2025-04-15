@@ -67,7 +67,6 @@ int main(int argc, char **argv) {
     if (argc == 0 && argv == NULL) {
         finalPort = atoi(argv[1]);
     }
-
     struct Server server;
     if (create_server(&server, finalPort, 10) != 0) {
         perror("Failed to start server");
@@ -85,7 +84,7 @@ int main(int argc, char **argv) {
     listen_loop(&server);
     dispose_server(&server);
 
-    // free(address);
+    free(address);
 
     return 0;
 }

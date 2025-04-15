@@ -34,7 +34,7 @@ char *read_str() {
     // когда пользователь введет enter, то обрезать длину - len и вернуть указатель
     
     while (1) {
-        int chNum= fgetc(stdin);
+        int chNum= getchar();
         if (chNum == EOF || chNum == '\n') {
             break;
         }
