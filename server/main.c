@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     }
 
     struct Server server;
-    if (create_server(&server, SERVER_PORT, 10) != 0) {
+    if (create_server(&server, finalPort, 10) != 0) {
         perror("Failed to start server");
         return 1;
     }

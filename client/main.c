@@ -16,8 +16,8 @@
 typedef struct Client Client;
 typedef struct Message Message;
 
-const char ip[] = "0.0.0.0";
-const int port = 26263;
+char ip[] = "0.0.0.0";
+int port = 26263;
 
 void *receiving_thread(void *client_p) {
     Client *client = client_p;
@@ -73,13 +73,25 @@ pthread_t create_sending_thread(Client *client) {
     return thread;
 }
 
-int main() {
+int main(int argc, char **argv) {
     /*printf("Enter message: ");*/
     /*char *str = read_str();*/
     /*printf("\n");*/
     /*printf("%s", str);*/
     /*printf("len: %lu", strlen(str));*/
 
+    char *finalIp;
+    int finalPort;
+
+    if (argc == 0 && argv == NULL) {
+        finalIp = ip;
+        finalPort = port;
+    } else {
+        finalIp = argv[1];
+        finalPort = atoi(argv[2]);
+    }
+
+    printf("Creation client with target address: %s:%i\n", finalIp, finalPort);
     Client *client = create_client(ip, port);
     if (client == NULL) {
         perror("client creation failed");
